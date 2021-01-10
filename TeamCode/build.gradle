@@ -8,9 +8,15 @@
 // please think carefully as to whether such customizations are really necessary
 // before doing so.
 
+apply plugin: 'com.android.application'
 
 // Custom definitions may go here
 
+android {
+    sourceSets {
+        main.java.srcDirs = ['../../FTC8863TeamCode']
+    }
+}
 // Include common definitions from above.
 apply from: '../build.common.gradle'
 
