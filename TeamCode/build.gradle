@@ -26,4 +26,5 @@ repositories {
 
 dependencies {
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
+    compile 'org.openftc:rev-extensions-2:1.2'
 }
