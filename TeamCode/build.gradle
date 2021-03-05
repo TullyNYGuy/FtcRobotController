@@ -21,3 +21,11 @@ repositories {
 dependencies {
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
 }
+
+android {
+
+    sourceSets.main {
+        java.srcDirs = [ '../../FTC8863TeamCode' ]
+        java.srcDirs += [ '../../RevExtensions2/rev-extensions-2/src/main/java' ]
+    }
+}
