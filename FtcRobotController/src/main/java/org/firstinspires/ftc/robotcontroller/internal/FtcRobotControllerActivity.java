@@ -62,7 +62,6 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.google.blocks.ftcrobotcontroller.ProgrammingWebHandlers;
 import com.google.blocks.ftcrobotcontroller.runtime.BlocksOpMode;
 import com.qualcomm.ftccommon.ClassManagerFactory;
@@ -313,6 +312,8 @@ public class FtcRobotControllerActivity extends Activity
         });
         popupMenu.inflate(R.menu.ftc_robot_controller);
         FtcDashboard.populateMenu(popupMenu.getMenu());
+        AnnotatedHooksClassFilter.getInstance().callOnCreateMenuMethods(
+            FtcRobotControllerActivity.this, popupMenu.getMenu());
         popupMenu.show();
       }
     });
@@ -320,6 +321,8 @@ public class FtcRobotControllerActivity extends Activity
     updateMonitorLayout(getResources().getConfiguration());
 
     BlocksOpMode.setActivityAndWebView(this, (WebView) findViewById(R.id.webViewBlocksRuntime));
+    ExternalLibraries.getInstance().onCreate();
+    onBotJavaHelper = new OnBotJavaHelperImpl();
 
     /*
      * Paranoia as the ClassManagerFactory requires EXTERNAL_STORAGE permissions
@@ -381,12 +384,12 @@ public class FtcRobotControllerActivity extends Activity
       initWifiMute(true);
     }
 
-    FtcAboutActivity.setBuildTimeFromBuildConfig(BuildConfig.BUILD_TIME);
+    FtcAboutActivity.setBuildTimeFromBuildConfig(BuildConfig.APP_BUILD_TIME);
 
     // check to see if there is a preferred Wi-Fi to use.
     checkPreferredChannel();
-
     FtcDashboard.start();
+    AnnotatedHooksClassFilter.getInstance().callOnCreateMethods(this);
   }
 
   protected UpdateUI createUpdateUI() {
@@ -421,6 +424,9 @@ public class FtcRobotControllerActivity extends Activity
   protected void onResume() {
     super.onResume();
     RobotLog.vv(TAG, "onResume()");
+
+    // In case the user just got back from fixing their clock, refresh ClockWarningSource
+    ClockWarningSource.getInstance().onPossibleRcClockUpdate();
   }
 
   @Override
@@ -455,8 +461,9 @@ public class FtcRobotControllerActivity extends Activity
     if (preferencesHelper != null) preferencesHelper.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(sharedPreferencesListener);
 
     RobotLog.cancelWriteLogcatToDisk();
-
     FtcDashboard.stop();
+    AnnotatedHooksClassFilter.getInstance().callOnDestroyMethods(this);
+    
   }
 
   protected void bindToService() {
@@ -485,20 +492,10 @@ public class FtcRobotControllerActivity extends Activity
   protected void logDeviceSerialNumber() {
     RobotLog.ii(TAG, "Android device serial number: " + Device.getSerialNumberOrUnknown());
   }
-
-  protected void readNetworkType() {
-
-    // The code here used to defer to the value found in a configuration file
-    // to configure the network type. If the file was absent, then it initialized
-    // it with a default.
-    //
-    // However, bugs have been reported with that approach (empty config files, specifically).
-    // Moreover, the non-Wifi-Direct networking is end-of-life, so the simplest and most robust
-    // (e.g.: no one can screw things up by messing with the contents of the config file) fix is
     // to do away with configuration file entirely.
     //
     // Control hubs are always running the access point model.  Everything else, for the time
-    // being always runs the wifi direct model.
+    // being always runs the Wi-Fi Direct model.
     if (Device.isRevControlHub() == true) {
       networkType = NetworkType.RCWIRELESSAP;
     } else {
@@ -523,6 +520,7 @@ public class FtcRobotControllerActivity extends Activity
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.ftc_robot_controller, menu);
     FtcDashboard.populateMenu(menu);
+    AnnotatedHooksClassFilter.getInstance().callOnCreateMenuMethods(this, menu);
     return true;
   }
 
@@ -666,6 +664,7 @@ public class FtcRobotControllerActivity extends Activity
     RobotLog.vv(FtcRobotControllerService.TAG, "%s.controllerService=bound", TAG);
     controllerService = service;
     updateUI.setControllerService(controllerService);
+    controllerService.setOnBotJavaHelper(onBotJavaHelper);
 
     updateUIAndRequestRobotSetup();
     programmingModeManager.setState(new FtcRobotControllerServiceState() {
@@ -675,13 +674,20 @@ public class FtcRobotControllerActivity extends Activity
         return service.getWebServer();
       }
 
+      @Nullable
+      @Override
+      public OnBotJavaHelper getOnBotJavaHelper() {
+        return service.getOnBotJavaHelper();
+      }
+
       @Override
       public EventLoopManager getEventLoopManager() {
         return service.getRobot().eventLoopManager;
       }
     });
-
     FtcDashboard.attachWebServer(service.getWebServer());
+    AnnotatedHooksClassFilter.getInstance().callWebHandlerRegistrarMethods(this,
+        service.getWebServer().getWebHandlerManager());
   }
 
   private void updateUIAndRequestRobotSetup() {
@@ -706,10 +712,15 @@ public class FtcRobotControllerActivity extends Activity
     HardwareFactory hardwareFactory = new HardwareFactory(context);
     try {
       hardwareFactory.setXmlPullParser(file.getXml());
-    } catch (Resources.NotFoundException e) {
+    } catch (FileNotFoundException | XmlPullParserException e) {
+      RobotLog.ww(TAG, e, "Unable to set configuration file %s. Falling back on noConfig.", file.getName());
       file = RobotConfigFile.noConfig(cfgFileMgr);
-      hardwareFactory.setXmlPullParser(file.getXml());
-      cfgFileMgr.setActiveConfigAndUpdateUI(false, file);
+      try {
+        hardwareFactory.setXmlPullParser(file.getXml());
+        cfgFileMgr.setActiveConfigAndUpdateUI(false, file);
+      } catch (FileNotFoundException | XmlPullParserException e1) {
+        RobotLog.ee(TAG, e1, "Failed to fall back on noConfig");
+      }
     }
 
     OpModeRegister userOpModeRegister = createOpModeRegister();
@@ -721,8 +732,8 @@ public class FtcRobotControllerActivity extends Activity
 
     passReceivedUsbAttachmentsToEventLoop();
     AndroidBoard.showErrorIfUnknownControlHub();
-
     FtcDashboard.attachEventLoop(eventLoop);
+    AnnotatedHooksClassFilter.getInstance().callOnCreateEventLoopMethods(this, eventLoop);
   }
 
   protected OpModeRegister createOpModeRegister() {
