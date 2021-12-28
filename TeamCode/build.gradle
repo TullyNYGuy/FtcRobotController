@@ -24,6 +24,7 @@ dependencies {
     implementation 'org.openftc:easyopencv:1.5.1' // easy open cv
     implementation 'org.ftclib.ftclib:vision:1.2.0' // FTCLib vision
     implementation 'org.ftclib.ftclib:core:1.2.1' // FTCLib core
+    implementation 'org.openftc:apriltag:1.0.0' //april tags for open cv
 }
 
 android {
