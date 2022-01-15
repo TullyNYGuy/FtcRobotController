@@ -23,14 +23,15 @@ dependencies {
     implementation 'com.acmerobotics.dashboard:dashboard:0.4.1'
     implementation project(':FtcRobotController')
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
-    implementation 'org.apache.commons:commons-math3:3.6.1'
-    implementation 'com.acmerobotics.roadrunner:core:0.5.3'
+    compile 'org.openftc:rev-extensions-2:1.2'
+    implementation 'org.apache.commons:commons-math3:3.6.1' // road runner
+    implementation 'com.acmerobotics.roadrunner:core:0.5.4' // road runner
+    implementation 'org.openftc:easyopencv:1.5.1' // easy open cv
 }
 
 android {
-
-    sourceSets.main {
-        java.srcDirs = [ '../../FTC8863TeamCode' ]
-        java.srcDirs += [ '../../RevExtensions2/rev-extensions-2/src/main/java' ]
-    }
+    sourceSets {
+        //main.java.srcDirs = [ '../../FTC8863TeamCode', '../../road-runner' ]
+        main.java.srcDirs = [ '../../FTC8863TeamCode' ]
+        main.java.srcDirs += [ '../../RevExtensions2/rev-extensions-2/src/main/java'     }
 }
