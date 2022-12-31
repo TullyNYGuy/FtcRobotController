@@ -67,7 +67,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * To learn more about the FTC field coordinate model, see FTC_FieldCoordinateSystemDefinition.pdf in this folder
  *
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
+ * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  *
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
@@ -100,7 +100,7 @@ public class ConceptVuforiaFieldNavigation extends LinearOpMode {
             "Ad0qd+H/////AAABmexztbYdQU2Nr7JSgOW+6tdZWp587kELQeR4bjkPZqC3PtZX5ZWA5dFP7iddRV9FhYnZ9FN/mV1Q2mxuD4EwCmPeY0XZvWfj28yiMbW0ToTp9v7boewpaggnvtJJIhVAnQYC539M7etmhshWeLVoCdMiEE2ON/2PUbLALodCpk4k6/2ewRmpnco0zsShxeXKQhr0RKmXheWwuRyO6gEYerZ0U5G8OLOpKW9jbqSQOVlQWWL+pTB40owll0mjCyKR3xAs6Ip283NJjaMr/x/r1b31VjN/Ohw2gpj4oGWAvJinUUmAY20vFlENzOwTajymVg7gYEKzpcq9Iux/VPb8AN8Lcxlri8cTrvGetS09s6g/";
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
-    // We will define some constants and conversions here.  These are useful for the Freight Frenzy field.
+    // We will define some constants and conversions here.  These are useful for the FTC competition field.
     private static final float mmPerInch        = 25.4f;
     private static final float mmTargetHeight   = 6 * mmPerInch;          // the height of the center of the target image above the floor
     private static final float halfField        = 72 * mmPerInch;
@@ -136,9 +136,8 @@ public class ConceptVuforiaFieldNavigation extends LinearOpMode {
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        targets = this.vuforia.loadTrackablesFromAsset("FreightFrenzy");
+        // Load the trackable assets.
+        targets = this.vuforia.loadTrackablesFromAsset("PowerPlay");
 
         // For convenience, gather together all the trackable objects in one easily-iterable collection */
         List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
@@ -163,10 +162,10 @@ public class ConceptVuforiaFieldNavigation extends LinearOpMode {
          */
 
         // Name and locate each trackable object
-        identifyTarget(0, "Blue Storage",       -halfField,  oneAndHalfTile, mmTargetHeight, 90, 0, 90);
-        identifyTarget(1, "Blue Alliance Wall",  halfTile,   halfField,      mmTargetHeight, 90, 0, 0);
-        identifyTarget(2, "Red Storage",        -halfField, -oneAndHalfTile, mmTargetHeight, 90, 0, 90);
-        identifyTarget(3, "Red Alliance Wall",   halfTile,  -halfField,      mmTargetHeight, 90, 0, 180);
+        identifyTarget(0, "Red Audience Wall",   -halfField,  -oneAndHalfTile, mmTargetHeight, 90, 0,  90);
+        identifyTarget(1, "Red Rear Wall",        halfField,  -oneAndHalfTile, mmTargetHeight, 90, 0, -90);
+        identifyTarget(2, "Blue Audience Wall",  -halfField,   oneAndHalfTile, mmTargetHeight, 90, 0,  90);
+        identifyTarget(3, "Blue Rear Wall",       halfField,   oneAndHalfTile, mmTargetHeight, 90, 0, -90);
 
         /*
          * Create a transformation matrix describing where the phone is on the robot.
